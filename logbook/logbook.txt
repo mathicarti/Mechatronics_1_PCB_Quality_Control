@@ -1,2 +1,20 @@
 Use this file to keep your log (see assignment instructions above).
 Make sure to include check point numbers for each entry!
+
+Monday 19/10:
+Made initial commit to GitHub with all the boilerplate provided + started planning
+
+Tuesday 22/10:
+Plan:
+ 1. Design and Setup ~ Plan the module layout (main, templates, matching, connections), define your structs
+ 2. Arguments and Error Handling ~ Validate argument count, mode, and template file in the spec’s order, with exact error message text.
+ 3. Template Library and Mode `t` ~ Decode the 128-byte bit-packed templates (watch bit order) and print them top row first.
+ 4. Image Loading and Thresholding ~ Load the BMP and convert every pixel to 0/1 using the average-RGB > 127 rule.
+ 5. Template Matching and Mode `l` ~ Scan every position for each template with early exit, and output components sorted by row, then column.
+ 6. Connection Detection and Mode `c` ~ Block component boxes, then BFS from each component’s outer edge to find which other components it reaches.
+ 7. Testing, Cleanup and Polish
+
+ - Made a couple of files for the main functions; connections.c: searches traces of target file, matching.c: thresholding and 
+ template matching on target file, template.c: load templates and print them out.
+ - Started parsing input in main.c and created a couple struct to solrt information.
+ - Made a Makefile to easily compile.

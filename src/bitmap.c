@@ -131,7 +131,6 @@ Bmp read_bmp(char *filename)
     bmp.height = header->height;
     bmp.width = header->width;
 
-
     return bmp;
 }
 
