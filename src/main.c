@@ -5,30 +5,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+
 #include "bitmap.h"
-
-#define FILENAME_BUFFER 512
-
-typedef enum
-{
-    UNDEFINED,
-    TEMPLATE,
-    COMPONENT_LIST,
-    CHECK_CONNECTIONS
-} Mode_type;
-
-typedef struct
-{
-    Mode_type mode;
-    char template_filename[FILENAME_BUFFER];
-    int index;
-    char board_image_filename[FILENAME_BUFFER];
-} Input_request;
-
+#include "connections.h"
+#include "matching.h"
+#include "template.h"
 
 int main(int argc, char **argv)
 {
-    if (argc != 3)
+    if (argc != 4)
     {
         printf("Invalid arguements!\n");
         exit(1);
@@ -37,28 +22,60 @@ int main(int argc, char **argv)
     Input_request request;
     
     if (!strcmp(argv[1], "t"))
+    {
         request.mode = TEMPLATE;
+        request.index = atoi(argv[3]);
+    }
     else if (!strcmp(argv[1], "l"))
+    {
         request.mode = COMPONENT_LIST;
-    else if (!strcmp(argv[1], "l"))
+        strcpy(request.board_image_filename, argv[3]);
+    }
+    else if (!strcmp(argv[1], "c"))
+    {
         request.mode = CHECK_CONNECTIONS;
+        strcpy(request.board_image_filename, argv[3]);
+    }
     else
     {
+        request.mode = UNDEFINED;
         printf("Invalid mode selected!\n");
-        exit(1);
+        exit(2);
     }
 
-    strcpy(argv[2], request.template_filename);
-    strcat(request.template_filename, ".bmp");
+    strcpy(request.template_filename, argv[2]);
 
-    FILE *fp = fopen(request.template_filename, "r");
+    FILE *template_fp = fopen(request.template_filename, "r");
     
-    if (fp == NULL)
+    if (template_fp == NULL)
     {
         printf("Can't load template file\n");
-        exit(1);
+        exit(3);
     }
 
+    switch (request.mode)
+    {
+    case TEMPLATE:
+        if (request.index < 0)
+        {
+            printf("Template index out of range\n");
+            exit(2);
+        }
+        handle_t_mode(request, template_fp);
+        break;
+
+    case COMPONENT_LIST:
+        handle_l_mode(request, template_fp);
+        break;
+    
+    case CHECK_CONNECTIONS:
+        handle_c_mode(request, template_fp);
+        break;
+
+    default:
+        exit(3);
+        break;
+    }
 
     return 0;
 }

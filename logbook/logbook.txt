@@ -18,3 +18,8 @@ Plan:
  template matching on target file, template.c: load templates and print them out.
  - Started parsing input in main.c and created a couple struct to solrt information.
  - Made a Makefile to easily compile.
+
+Monday 26/10:
+Parsed input mode and filled out header files
+
+Wednesday 28/10:
