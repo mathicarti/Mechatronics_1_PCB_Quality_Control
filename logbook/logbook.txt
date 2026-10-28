@@ -26,4 +26,9 @@ Wednesday 28/10:
 Implemented template reading.
 Can read binary, get the index, go to said index and read the template.
 Template mode fully works!
-Will need to implement functions to make it easier to read and more usable.
+Split up the main handle_t_mode(...) function into three
+ - int get_template(uint8_t *template_buffer, int template_index, FILE *template_fp); which returns whether 
+ the index is out of range, if not loads the template data from template_fp to template_buffer.
+ - void print_byte(uint8_t byte); prints a 8 pixels from a byte correctly using bitmasks.
+ - void print_template(uint8_t *template); prints all the pixels in the right row and collumn order to the terminal.
+I am thinking to add a struct for the template and parse data into it so the conversion is easier with the BMP images.

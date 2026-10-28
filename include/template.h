@@ -32,4 +32,8 @@ typedef struct
 } Input_request;
 
 void handle_t_mode(Input_request request, FILE *template_fp);
+int get_template(uint8_t *template_buffer, int template_index, FILE *template_fp);
+void print_template(uint8_t *template);
+void print_byte(uint8_t byte);
+
 #endif
