@@ -23,3 +23,7 @@ Monday 26/10:
 Parsed input mode and filled out header files
 
 Wednesday 28/10:
+Implemented template reading.
+Can read binary, get the index, go to said index and read the template.
+Template mode fully works!
+Will need to implement functions to make it easier to read and more usable.

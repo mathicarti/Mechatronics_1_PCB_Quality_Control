@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
     strcpy(request.template_filename, argv[2]);
 
-    FILE *template_fp = fopen(request.template_filename, "r");
+    FILE *template_fp = fopen(request.template_filename, "rb");
     
     if (template_fp == NULL)
     {
@@ -59,6 +59,7 @@ int main(int argc, char **argv)
         if (request.index < 0)
         {
             printf("Template index out of range\n");
+            fclose(template_fp);
             exit(2);
         }
         handle_t_mode(request, template_fp);
@@ -73,9 +74,11 @@ int main(int argc, char **argv)
         break;
 
     default:
+        fclose(template_fp);
         exit(3);
         break;
     }
 
+    fclose(template_fp);
     return 0;
 }
