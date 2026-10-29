@@ -13,5 +13,13 @@
 
 void handle_l_mode(Input_request request, FILE *template_fp)
 {
+    // load bmp
+
+    // threshold it
+
+    // load each template and go through the pcb to see if it is there
+    // add its possition to a list
+
+    // print 
     return;
 }

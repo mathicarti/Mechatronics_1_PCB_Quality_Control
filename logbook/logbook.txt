@@ -16,7 +16,7 @@ Plan:
 
  - Made a couple of files for the main functions; connections.c: searches traces of target file, matching.c: thresholding and 
  template matching on target file, template.c: load templates and print them out.
- - Started parsing input in main.c and created a couple struct to solrt information.
+ - Started parsing input in main.c and created a couple struct to sort information.
  - Made a Makefile to easily compile.
 
 Monday 26/10:
@@ -30,5 +30,28 @@ Split up the main handle_t_mode(...) function into three
  - int get_template(uint8_t *template_buffer, int template_index, FILE *template_fp); which returns whether 
  the index is out of range, if not loads the template data from template_fp to template_buffer.
  - void print_byte(uint8_t byte); prints a 8 pixels from a byte correctly using bitmasks.
- - void print_template(uint8_t *template); prints all the pixels in the right row and collumn order to the terminal.
+ - void print_template(uint8_t *template); prints all the pixels in the right row and column order to the terminal.
 I am thinking to add a struct for the template and parse data into it so the conversion is easier with the BMP images.
+
+Thursday 29/10:
+Implemented:
+Needed a better way to explore the template so I made an array with all the templates. The templates themselves
+are in a bmp style [row][column]. Each row is allocated to have an array of pointers to columns. 
+These columns each have a uint8_t pixel. This does result in longer wait times to load the whole binary 
+to print just one template but is a worthy sacrifice as I wont have to double up on functions.
+
+Functions made:
+ - Template_array read_template_array(FILE *template_fp); Loads a binary file into a bmp styled template array
+ The pixels are ordered like a bmp and each pixel is either black or white sorted in a 2D array.
+ - void get_template_at_index(uint8_t **template, int template_index, FILE *template_fp); Loads binary at the index 
+ of a template into a template_buffer.
+ - void free_template_array(Template_array *template_array); frees custom template array.
+ - void arrange_template(uint8_t **template, uint8_t *template_buffer); helper function to order the raw bits of a
+ template into a target 2D pixel template in the right bmp order.
+
+Functions changed:
+ - void handle_t_mode(Input_request request, FILE *template_fp); Modified so it loads the whole binary, checks index,
+ and prints the template at an index. (Note: I could also load the binary in main but and pass the array to each mode. 
+ But as there only one mode at one time I won't.)
+ - void print_template(uint8_t **template); Changed so it could print using array[row][column] syntax.
+ - void print_pixel(uint8_t pixel); Prints a single pixel as the binary is already decoded in arrange_template(...).
