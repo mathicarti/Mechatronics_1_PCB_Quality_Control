@@ -60,9 +60,14 @@ Friday 30/10:
 Made a linked list to keep a dynamic record of the components and their positions
 simplified template with a typdef Template instead of writing uint8_t 
 Functions made:
- - void threshold_board_image(Bmp *board_image);
- - Component get_component(Template template, Bmp board_image);
+ - void threshold_board_image(Bmp *board_image); converts an colour image to black and white based on a custom threshold
+ - Helper functions
+   - double average_colour(uint8_t *pixel); return average pixel colour
+   - void set_pixel_black(uint8_t *pixel); sets a target pixel to be black
+   - void set_pixel_white(uint8_t *pixel); sets a target pixel to be white
  - void find_components(Template template, Bmp board_image, Component_Node **component_node_head);
- - void print_components(Component_Node *component_node_head);
- - void add_component_node(Component component, Component_Node **component_node_head);
- - void free_component_node(Component_Node *component_node_head);
+ goes through whole image and adds components when the templates matches
+ - void print_components(Component_Node *component_node_head); Goes through linked list getting the number of node and 
+ prints each component 
+ - void add_component_node(Component component, Component_Node **component_node_head); adds a component to a linked list
+ - void free_component_node(Component_Node *component_node_head); frees the memory of a linked list

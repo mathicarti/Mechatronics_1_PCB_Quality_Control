@@ -13,6 +13,8 @@
 #include "connections.h"
 #include "template.h"
 
+#define THRESHOLD 127.50
+
 typedef struct
 {
     uint8_t type;
