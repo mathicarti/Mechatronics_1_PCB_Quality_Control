@@ -51,7 +51,7 @@ Template_array read_template_array(FILE *template_fp)
     return template_array;
 }
 
-void get_template_at_index(uint8_t **template, int template_index, FILE *template_fp)
+void get_template_at_index(Template template, int template_index, FILE *template_fp)
 {
     // 8 pixel per byte; 32 pixels per row = 4 bytes per row; 32 rows = 128 bytes
     uint8_t template_buffer[128];
@@ -62,7 +62,7 @@ void get_template_at_index(uint8_t **template, int template_index, FILE *templat
 }
 
 // Arranges a binary template to a bmp style template
-void arrange_template(uint8_t **template, uint8_t *template_buffer)
+void arrange_template(Template template, uint8_t *template_buffer)
 {
     for (int row = TEMPLATE_HEIGHT - 1; row >= 0; row--)
     {
@@ -93,7 +93,7 @@ void free_template_array(Template_array *template_array)
     free(template_array->template);
 }
 
-void print_template(uint8_t **template)
+void print_template(Template template)
 {
     printf("Template data:\n");
 
