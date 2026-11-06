@@ -13,7 +13,7 @@
 
 double average_colour(uint8_t *pixel)
 {
-    return (pixel[0] + pixel[1] + pixel[2]) / 3;
+    return (pixel[0] + pixel[1] + pixel[2]) / 3.0;
 }
 
 void set_pixel_black(uint8_t *pixel)
@@ -38,7 +38,7 @@ void threshold_board_image(Bmp *board_image)
         {
             uint8_t *pixel = board_image->pixels[row][col];
             // Average pixel colour and compare them to custom threshold
-            if (average_colour(pixel) < THRESHOLD)
+            if (average_colour(pixel) > THRESHOLD)
                 set_pixel_black(pixel);
             else
                 set_pixel_white(pixel);
@@ -46,9 +46,52 @@ void threshold_board_image(Bmp *board_image)
     }
 }
 
-void find_components(Template template, Bmp board_image, Component_Node **component_node_head)
+// Returns 1 if both pixel have the same value, else 0
+int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
 {
-    ;
+    printf("here 2\n");
+    if ((template_pixel == 1 && board_pixel[0] == 255) || (template_pixel == board_pixel[0]))
+    {
+        printf("1 ");
+        return 1;
+    }
+    printf("0 ");
+    return 0;
+}
+
+// Finds if the area of interest is the same as the template, if so returns 1, else 0
+int is_template(Template template, uint8_t ***board_pixels, int board_row, int board_col)
+{
+    for (int row = 0; row < TEMPLATE_HEIGHT; row++)
+    {
+        for (int col = 0; col < TEMPLATE_WIDTH; col++)
+        {
+            printf("here 1\n");
+            if (!pixel_is_same(template[TEMPLATE_HEIGHT - row][col], board_pixels[board_row - row][board_col + col]))
+                return 0;
+        }
+    }
+    return 1;
+}
+
+void find_components(Template template, uint8_t template_index, Bmp board_image, Component_Node **component_node_head)
+{
+    // Go through all possible row where the template could fit
+    for (int board_row = TEMPLATE_HEIGHT; board_row < board_image.height; board_row++)
+    {
+        // Go through all possible column where the template could fit
+        for (int board_col = 0; board_col < board_image.width - TEMPLATE_WIDTH; board_col++)
+        {
+            printf("|-- Searching for template at r:%4i, c:%4i --|\n", board_row, board_col);
+            if (is_template(template, board_image.pixels, board_row, board_col))
+            {
+                Component new_component = { template_index, board_row, board_col };
+                add_component_node(new_component, component_node_head);
+                printf("Added component\n");
+            }
+            printf("\n|----------------------------------------------|\n\n");
+        }
+    }
 }
 
 void handle_l_mode(Input_request request, FILE *template_fp)
@@ -65,8 +108,10 @@ void handle_l_mode(Input_request request, FILE *template_fp)
     // For each template go through the pcb to see if it is there add its position to the component list
     for (int i = 0; i < template_array.count; i++)
     {
+        printf("Searching for ");
+        print_template(template_array.template[i]);
         // Search through the board and add components as needed
-        find_components(template_array.template[i], board_image, component_node_head);
+        find_components(template_array.template[i], i, board_image, &component_node_head);
     }
     // print component type and positions
     print_components(component_node_head);
@@ -84,7 +129,7 @@ void print_components(Component_Node *component_node_head)
     int count = 0;
     for (; component_node_head; count++);
 
-    printf("Found %i components:\n");
+    printf("Found %i components:\n", count);
     while (component_node_head)
     {
         printf("type: %d, row: %d, column: %d\n", component_node_head->component.type, 

@@ -71,3 +71,7 @@ Functions made:
  prints each component 
  - void add_component_node(Component component, Component_Node **component_node_head); adds a component to a linked list
  - void free_component_node(Component_Node *component_node_head); frees the memory of a linked list
+
+Sunday 31/10:
+Completing the empty functions and figuring out bugs
+ - in arrange_template(...); I was seting template pixels to either 0 or (1-255) and not 0 or 1

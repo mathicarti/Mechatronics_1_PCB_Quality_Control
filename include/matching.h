@@ -13,7 +13,7 @@
 #include "connections.h"
 #include "template.h"
 
-#define THRESHOLD 127.50
+#define THRESHOLD 127.00
 
 typedef struct
 {

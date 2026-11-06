@@ -73,7 +73,7 @@ void arrange_template(Template template, uint8_t *template_buffer)
             for (int i = 0; i < BYTE; i++)
             {
                 // A 1 is a white pixel and 0 is a black pixel
-                template[row][col_byte * BYTE + i] = template_buffer[row * TEMPLATE_WIDTH_BYTE + col_byte] & 1 << (BYTE -1 - i);
+                template[row][col_byte * BYTE + i] = (template_buffer[row * TEMPLATE_WIDTH_BYTE + col_byte] & 1 << (BYTE - 1 - i)) ? 1 : 0;
             }
         }
     }
