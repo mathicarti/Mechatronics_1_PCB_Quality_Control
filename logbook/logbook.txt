@@ -85,3 +85,5 @@ Figuring out function bugs
  - print_components(...); unboaded for loop which made my program break. Fixed but, need to traverse the linked list 
  backwards or make a doubly linked list.
  Note: The criteria seems to be searching from top left instead of mine which searches from the bottom left.
+ - Updated find_components(...); to search top left instead of bottom left. Finding templates in a specific 
+ area is left the same.

@@ -72,7 +72,7 @@ int is_template(Template template, uint8_t ***board_pixels, int board_row, int b
 void find_components(Template template, uint8_t template_index, Bmp board_image, Component_Node **component_node_head)
 {
     // Go through all possible row where the template could fit
-    for (int board_row = 0; board_row < board_image.height - TEMPLATE_HEIGHT; board_row++)
+    for (int board_row = board_image.height - TEMPLATE_HEIGHT; board_row >= 0; board_row--)
     {
         // Go through all possible column where the template could fit
         for (int board_col = 0; board_col < board_image.width - TEMPLATE_WIDTH; board_col++)
@@ -128,10 +128,8 @@ void print_components(Component_Node *component_node_head)
 void add_component_node(Component component, Component_Node **component_node_head)
 {
     Component_Node *component_node = (Component_Node *) malloc(sizeof(Component_Node));
-
     component_node->component = component;
     component_node->next = *component_node_head;
-
     *component_node_head = component_node;
 }
 
