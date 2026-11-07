@@ -69,18 +69,22 @@ int is_template(Template template, uint8_t ***board_pixels, int board_row, int b
     return 1;
 }
 
-void find_components(Template template, uint8_t template_index, Bmp board_image, Component_Node **component_node_head)
+void find_components(Template_array template_array, Bmp board_image, Component_Node **component_node_head)
 {
     // Go through all possible row where the template could fit
-    for (int board_row = board_image.height - TEMPLATE_HEIGHT; board_row >= 0; board_row--)
+    for (int board_row = 0; board_row < board_image.height - TEMPLATE_HEIGHT; board_row++)
     {
         // Go through all possible column where the template could fit
         for (int board_col = 0; board_col < board_image.width - TEMPLATE_WIDTH; board_col++)
         {
-            if (is_template(template, board_image.pixels, board_row, board_col))
+            // Search through specififc area for any template match and add components as needed
+            for (int i = 0; i < template_array.count; i++)
             {
-                Component new_component = { template_index, board_row, board_col };
-                add_component_node(new_component, component_node_head);
+                if (is_template(template_array.template[i], board_image.pixels, board_row, board_col))
+                {
+                    Component new_component = {i, board_row, board_col};
+                    add_component_node(new_component, component_node_head);
+                }
             }
         }
     }
@@ -97,12 +101,9 @@ void handle_l_mode(Input_request request, FILE *template_fp)
     // Load all templates in an array
     Template_array template_array = read_template_array(template_fp);
     
-    // For each template go through the pcb to see if it is there add its position to the component list
-    for (int i = 0; i < template_array.count; i++)
-    {
-        // Search through the board and add components as needed
-        find_components(template_array.template[i], i, board_image, &component_node_head);
-    }
+    // Search through board for any matching templates and add it to list
+    find_components(template_array, board_image, &component_node_head);
+
     // print component type and positions
     print_components(component_node_head);
 

@@ -87,3 +87,6 @@ Figuring out function bugs
  Note: The criteria seems to be searching from top left instead of mine which searches from the bottom left.
  - Updated find_components(...); to search top left instead of bottom left. Finding templates in a specific 
  area is left the same.
+ Note: The criteria only traverses the image once and search an area for any templates and it searches form bottom left. 
+ I searched the image for a specific component and traverse the image again for the next.
+ - Updated handle_l_mode(...); and find_components(...); to implement search once for every components.
