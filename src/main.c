@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 {
     if (argc != 4)
     {
-        printf("Invalid arguements!\n");
+        printf("Invalid arguments!\n");
         exit(1);
     }
 

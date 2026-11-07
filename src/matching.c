@@ -77,7 +77,7 @@ void find_components(Template_array template_array, Bmp board_image, Component_N
         // Go through all possible column where the template could fit
         for (int board_col = 0; board_col < board_image.width - TEMPLATE_WIDTH; board_col++)
         {
-            // Search through specififc area for any template match and add components as needed
+            // Search through specific area for any template match and add components as needed
             for (int i = 0; i < template_array.count; i++)
             {
                 if (is_template(template_array.template[i], board_image.pixels, board_row, board_col))
@@ -126,12 +126,25 @@ void print_components(Component_Node *component_node_head)
             component_node_head->component.row, component_node_head->component.column);
 }
 
+// Adds a Component to the end of a linked list
 void add_component_node(Component component, Component_Node **component_node_head)
 {
+    // Make a new end component node
     Component_Node *component_node = (Component_Node *) malloc(sizeof(Component_Node));
     component_node->component = component;
-    component_node->next = *component_node_head;
-    *component_node_head = component_node;
+    component_node->next = NULL;
+
+    // Check of list is empty
+    if (*component_node_head == NULL)
+    {
+        *component_node_head = component_node;
+        return;
+    }
+    // Go to the end of the list
+    Component_Node *node_pointer = *component_node_head;
+    for (; node_pointer->next != NULL; node_pointer = node_pointer->next);
+    // Set it at the end of list
+    node_pointer->next = component_node;
 }
 
 void free_component_node(Component_Node *component_node_head)
