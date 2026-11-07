@@ -92,17 +92,14 @@ void find_components(Template_array template_array, Bmp board_image, Component_N
 
 void handle_l_mode(Input_request request, FILE *template_fp)
 {
-    Component_Node *component_node_head = NULL;
-
+    
     // load bmp and threshold it
     Bmp board_image = read_bmp(request.board_image_filename);
     threshold_board_image(&board_image);
-
-    // Load all templates in an array
-    Template_array template_array = read_template_array(template_fp);
     
     // Search through board for any matching templates and add it to list
-    find_components(template_array, board_image, &component_node_head);
+    // Get the list of components and positions on the board
+    Component_Node *component_node_head = get_component_list(template_fp, board_image);
 
     // print component type and positions
     print_components(component_node_head);
@@ -110,8 +107,22 @@ void handle_l_mode(Input_request request, FILE *template_fp)
     // free variables
     free_bmp(board_image);
     free_component_node(component_node_head);
-    free_template_array(&template_array);
     return;
+}
+
+// Return a list of all the components on a thresholded board
+Component_Node *get_component_list(FILE *template_fp, Bmp board_image)
+{
+    Component_Node *component_node_head = NULL;
+
+    // Load all templates in an array
+    Template_array template_array = read_template_array(template_fp);
+    
+    // Search through board for any matching templates and add it to list
+    find_components(template_array, board_image, &component_node_head);
+    
+    free_template_array(&template_array);
+    return component_node_head;
 }
 
 void print_components(Component_Node *component_node_head)

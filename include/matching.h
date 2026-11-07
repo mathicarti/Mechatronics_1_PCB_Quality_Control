@@ -30,6 +30,7 @@ typedef struct Component_Node
 } Component_Node;
 
 void handle_l_mode(Input_request request, FILE *template_fp);
+Component_Node *get_component_list(FILE *template_fp, Bmp board_image);
 
 void print_components(Component_Node *component_node_head);
 void add_component_node(Component component, Component_Node **component_node_head);

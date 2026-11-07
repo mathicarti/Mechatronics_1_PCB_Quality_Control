@@ -94,3 +94,5 @@ Figuring out function bugs
  - Updated add_component_node(...); to traverse through the list first to add new components at the end.
  - Updated Component struct; it would overflow in the column and row field, changed it to uint16_t instead of a uint8_t
  Found out since all the fails in the automaticated tests would be offset by exactly 256!
+ - Made Component_Node *get_component_list(FILE *template_fp, Bmp board_image); which return a list of all the 
+ components on a thresholded board. It more widely used if jus tthe component places are needed (eg finding connections)

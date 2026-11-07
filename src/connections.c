@@ -13,5 +13,16 @@
 
 void handle_c_mode(Input_request request, FILE *template_fp)
 {
+    // Load board
+    
+    
+    // Get all the components on board
+    Component_Node *component_node_head = NULL;
+
+
+    // For each component find all their connections
+    // Print out all connections
+
+
     return;
 }
