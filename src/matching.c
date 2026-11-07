@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <math.h>
 
 #include "bitmap.h"
@@ -39,9 +38,9 @@ void threshold_board_image(Bmp *board_image)
             uint8_t *pixel = board_image->pixels[row][col];
             // Average pixel colour and compare them to custom threshold
             if (average_colour(pixel) > THRESHOLD)
-                set_pixel_black(pixel);
-            else
                 set_pixel_white(pixel);
+            else
+                set_pixel_black(pixel);
         }
     }
 }
@@ -49,13 +48,10 @@ void threshold_board_image(Bmp *board_image)
 // Returns 1 if both pixel have the same value, else 0
 int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
 {
-    printf("here 2\n");
     if ((template_pixel == 1 && board_pixel[0] == 255) || (template_pixel == board_pixel[0]))
     {
-        printf("1 ");
         return 1;
     }
-    printf("0 ");
     return 0;
 }
 
@@ -66,8 +62,7 @@ int is_template(Template template, uint8_t ***board_pixels, int board_row, int b
     {
         for (int col = 0; col < TEMPLATE_WIDTH; col++)
         {
-            printf("here 1\n");
-            if (!pixel_is_same(template[TEMPLATE_HEIGHT - row][col], board_pixels[board_row - row][board_col + col]))
+            if (!pixel_is_same(template[row][col], board_pixels[board_row + row][board_col + col]))
                 return 0;
         }
     }
@@ -77,19 +72,16 @@ int is_template(Template template, uint8_t ***board_pixels, int board_row, int b
 void find_components(Template template, uint8_t template_index, Bmp board_image, Component_Node **component_node_head)
 {
     // Go through all possible row where the template could fit
-    for (int board_row = TEMPLATE_HEIGHT; board_row < board_image.height; board_row++)
+    for (int board_row = 0; board_row < board_image.height - TEMPLATE_HEIGHT; board_row++)
     {
         // Go through all possible column where the template could fit
         for (int board_col = 0; board_col < board_image.width - TEMPLATE_WIDTH; board_col++)
         {
-            printf("|-- Searching for template at r:%4i, c:%4i --|\n", board_row, board_col);
             if (is_template(template, board_image.pixels, board_row, board_col))
             {
                 Component new_component = { template_index, board_row, board_col };
                 add_component_node(new_component, component_node_head);
-                printf("Added component\n");
             }
-            printf("\n|----------------------------------------------|\n\n");
         }
     }
 }
@@ -108,8 +100,6 @@ void handle_l_mode(Input_request request, FILE *template_fp)
     // For each template go through the pcb to see if it is there add its position to the component list
     for (int i = 0; i < template_array.count; i++)
     {
-        printf("Searching for ");
-        print_template(template_array.template[i]);
         // Search through the board and add components as needed
         find_components(template_array.template[i], i, board_image, &component_node_head);
     }
@@ -127,14 +117,12 @@ void print_components(Component_Node *component_node_head)
 {
     // Go through the linked list and count nodes
     int count = 0;
-    for (; component_node_head; count++);
+    for (Component_Node *node_pointer = component_node_head; node_pointer != NULL; count++) node_pointer = node_pointer->next;
 
     printf("Found %i components:\n", count);
-    while (component_node_head)
-    {
+    for (; component_node_head != NULL; component_node_head = component_node_head->next)
         printf("type: %d, row: %d, column: %d\n", component_node_head->component.type, 
             component_node_head->component.row, component_node_head->component.column);
-    }
 }
 
 void add_component_node(Component component, Component_Node **component_node_head)
@@ -153,7 +141,6 @@ void free_component_node(Component_Node *component_node_head)
     {
         Component_Node *temp = component_node_head;
         component_node_head = component_node_head->next;
-
         free(temp);
     }
 }

@@ -74,4 +74,14 @@ Functions made:
 
 Sunday 31/10:
 Completing the empty functions and figuring out bugs
- - in arrange_template(...); I was seting template pixels to either 0 or (1-255) and not 0 or 1
+ - in arrange_template(...); I was setting template pixels to either 0 or (1-255) and not 0 or 1
+
+Saturday 7/11:
+Figuring out function bugs
+ - find_components(...); I was looping through the images wrong which created an out of bound error.
+ I was trying to start from the top left corner which made everything unnecessarily more complex.
+ - threshold_board_image(Bmp *board_image); threshold was inverted wrote white instead of black and vice versa
+ This was why it could find no templates.
+ - print_components(...); unboaded for loop which made my program break. Fixed but, need to traverse the linked list 
+ backwards or make a doubly linked list.
+ Note: The criteria seems to be searching from top left instead of mine which searches from the bottom left.
