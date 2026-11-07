@@ -92,3 +92,5 @@ Figuring out function bugs
  - Updated handle_l_mode(...); and find_components(...); to implement search once for every components.
  Note: need to add components to the end of the linked list and not the head to agree with the criteria
  - Updated add_component_node(...); to traverse through the list first to add new components at the end.
+ - Updated Component struct; it would overflow in the column and row field, changed it to uint16_t instead of a uint8_t
+ Found out since all the fails in the automaticated tests would be offset by exactly 256!

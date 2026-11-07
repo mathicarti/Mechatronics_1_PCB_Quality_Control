@@ -18,8 +18,8 @@
 typedef struct
 {
     uint8_t type;
-    uint8_t row;
-    uint8_t column;
+    uint16_t row;
+    uint16_t column;
 } Component;
 
 // Linked list to track each component on pcb

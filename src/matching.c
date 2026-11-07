@@ -72,10 +72,10 @@ int is_template(Template template, uint8_t ***board_pixels, int board_row, int b
 void find_components(Template_array template_array, Bmp board_image, Component_Node **component_node_head)
 {
     // Go through all possible row where the template could fit
-    for (int board_row = 0; board_row < board_image.height - TEMPLATE_HEIGHT; board_row++)
+    for (int board_row = 0; board_row <= board_image.height - TEMPLATE_HEIGHT; board_row++)
     {
         // Go through all possible column where the template could fit
-        for (int board_col = 0; board_col < board_image.width - TEMPLATE_WIDTH; board_col++)
+        for (int board_col = 0; board_col <= board_image.width - TEMPLATE_WIDTH; board_col++)
         {
             // Search through specific area for any template match and add components as needed
             for (int i = 0; i < template_array.count; i++)
