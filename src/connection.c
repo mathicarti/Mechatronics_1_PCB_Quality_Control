@@ -7,6 +7,10 @@
 #include "bitmap.h"
 #include "connection.h"
 
+// Directions for moving Down, Up, Left, Right (row 0 is the bottom of the image)
+static const int dir_row[NEIGHBOUR_COUNT] = {-1, 1, 0, 0};
+static const int dir_col[NEIGHBOUR_COUNT] = {0, 0, -1, 1};
+
 // Converts a point to its index in the flat visited/owner arrays
 static int pixel_index(Point point, Bmp board_image)
 {
