@@ -129,11 +129,7 @@ Component_Node *get_component_list(FILE *template_fp, Bmp board_image)
 
 void print_components(Component_Node *component_node_head)
 {
-    // Go through the linked list and count nodes
-    int count = 0;
-    for (Component_Node *node_pointer = component_node_head; node_pointer != NULL; count++) node_pointer = node_pointer->next;
-
-    printf("Found %i components:\n", count);
+    printf("Found %i components:\n", count_components(component_node_head));
     for (; component_node_head != NULL; component_node_head = component_node_head->next)
         printf("type: %d, row: %d, column: %d\n", component_node_head->component.type, 
             component_node_head->component.row, component_node_head->component.column);

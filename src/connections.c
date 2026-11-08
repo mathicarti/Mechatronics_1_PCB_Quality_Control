@@ -11,107 +11,215 @@
 #include "matching.h"
 #include "template.h"
 
+#define NO_OWNER -1
+#define NEIGHBOUR_COUNT 4
+
 typedef struct
 {
-    uint8_t x;
-    uint8_t y;
+    int row;
+    int col;
 } Point;
 
-// Directions for moving Up, Down, Left, Right
-int dir_x[] = {-1, 1, 0, 0};
-int dir_y[] = {0, 0, -1, 1};
+// Directions for moving Down, Up, Left, Right (row 0 is the bottom of the image)
+const int dir_row[NEIGHBOUR_COUNT] = {-1, 1, 0, 0};
+const int dir_col[NEIGHBOUR_COUNT] = {0, 0, -1, 1};
 
-void add_connection(int *connected, uint8_t *count, uint8_t component_id)
+// Converts a point to its index in the flat visited/owner arrays
+int pixel_index(Point point, Bmp board_image)
 {
-    (*count)++;
-    connected[*count] = component_id;
+    return point.row * board_image.width + point.col;
 }
 
-// Check if new point is in bounds, a white pixel and unvisited
-int is_valid_point(Point new_point, Bmp board_image, uint8_t **visited)
+int is_in_bounds(Point point, Bmp board_image)
 {
-    return (new_point.x >= 0 && new_point.x < board_image.width && new_point.y >= 0 && new_point.y < board_image.height 
-        && board_image.pixels[0] != 0 && !visited[new_point.x][new_point.y]);
+    return (point.row >= 0 && point.row < (int) board_image.height
+        && point.col >= 0 && point.col < (int) board_image.width);
 }
 
-// BFS to find if there is a valid path to a target point
-int BFS_component(Bmp board_image, uint8_t **visited, Point *queue, int head, int tail, Point target)
+// Counts the components in the linked list
+int count_components(Component_Node *component_node_head)
 {
-    // Empty queue (not found)
-    if (head == tail)
-        return 0;
-    
-    // Dequeue front
-    Point current = queue[head];
-    
-    // Found target point
-    if (current.x == target.x && current.x == target.y)
-        return 1;
+    int count = 0;
+    for (; component_node_head != NULL; component_node_head = component_node_head->next)
+        count++;
+    return count;
+}
 
-    // Search all 4 neighboring pixels
-    for (int i = 0; i < 4; i++)
+// Makes a flat map of the board holding the id of the component whose 32x32 box covers
+// each pixel, or NO_OWNER if no box covers it. Returns NULL if allocation fails
+int *create_owner_map(Component_Node *component_node_head, Bmp board_image)
+{
+    size_t pixel_count = (size_t) board_image.width * board_image.height;
+    int *owner = (int *) malloc(sizeof(int) * pixel_count);
+    if (owner == NULL)
+        return NULL;
+
+    for (size_t i = 0; i < pixel_count; i++)
+        owner[i] = NO_OWNER;
+
+    for (; component_node_head != NULL; component_node_head = component_node_head->next)
     {
-        Point new_point = {current.x + dir_x[i], current.y + dir_y[i]};
-
-        if (is_valid_point(new_point, board_image, visited)) 
+        Component component = component_node_head->component;
+        for (int row = 0; row < TEMPLATE_HEIGHT; row++)
         {
-            visited[new_point.x][new_point.y] = 1;
-            queue[tail].x = new_point.x;
-            queue[tail].y = new_point.y;
-            tail++;
+            for (int col = 0; col < TEMPLATE_WIDTH; col++)
+            {
+                Point point = {component.row + row, component.column + col};
+                owner[pixel_index(point, board_image)] = component.id;
+            }
         }
     }
-    // Move head forward by one and search
-    return BFS_component(board_image, visited, queue, head + 1, tail, target);
+    return owner;
 }
 
-// Find all the connections of one component
-void find_connections(Component_Node *origin_pointer, Component_Node *target_pointer, Bmp board_image)
+// Check if a point is in bounds, a white pixel, not inside a component box and unvisited
+int is_open_point(Point point, Bmp board_image, int *owner, uint8_t *visited)
 {
-    for (; target_pointer != NULL && target_pointer != origin_pointer; target_pointer = target_pointer->next)
-    {
-        // 2D grid of visited pixels; 1 is visited 0 is not
-        // Set up as a VLA for easy freeing
-        uint8_t (*visited)[board_image.width] = calloc(board_image.height * sizeof(*visited), 0);
-        Point queue[board_image.height * board_image.width];
-        int head = 0, tail = 0;
-    
-        Point origin = {origin_pointer->component.row, origin_pointer->component.column};
-        Point target = {target_pointer->component.row, target_pointer->component.column};
-    
-        visited[origin.x][origin.x] = 1;
-        queue[tail] = origin;
-        tail++;
+    if (!is_in_bounds(point, board_image))
+        return 0;
 
-        // Do BFS until target coordinate are found. If found add add id do origin list. Move on to next target component
-        if (BFS_component(board_image, visited, queue, head, tail, target))
-            add_connection(origin_pointer->component.connected, &(origin_pointer->component.count), target_pointer->component.id);
-        
-        free(visited);
+    int index = pixel_index(point, board_image);
+    return (board_image.pixels[point.row][point.col][RED] == 255
+        && owner[index] == NO_OWNER && !visited[index]);
+}
+
+// Marks a point as visited and adds it to the back of the queue
+void enqueue_point(Point point, Bmp board_image, uint8_t *visited, Point *queue, int *tail)
+{
+    visited[pixel_index(point, board_image)] = 1;
+    queue[*tail] = point;
+    (*tail)++;
+}
+
+// Starts the queue with every open pixel directly touching the outside of the component's box
+void seed_queue_from_component(Component origin, Bmp board_image, int *owner, 
+    uint8_t *visited, Point *queue, int *tail)
+{
+    for (int row = 0; row < TEMPLATE_HEIGHT; row++)
+    {
+        for (int col = 0; col < TEMPLATE_WIDTH; col++)
+        {
+            for (int i = 0; i < NEIGHBOUR_COUNT; i++)
+            {
+                Point neighbour = {origin.row + row + dir_row[i], origin.column + col + dir_col[i]};
+                if (is_open_point(neighbour, board_image, owner, visited))
+                    enqueue_point(neighbour, board_image, visited, queue, tail);
+            }
+        }
     }
+}
+
+// Flags every other component whose box touches the given trace pixel
+void mark_touching_components(Point current, Component origin, Bmp board_image, 
+    int *owner, uint8_t *touched)
+{
+    for (int i = 0; i < NEIGHBOUR_COUNT; i++)
+    {
+        Point neighbour = {current.row + dir_row[i], current.col + dir_col[i]};
+        if (!is_in_bounds(neighbour, board_image))
+            continue;
+
+        int neighbour_owner = owner[pixel_index(neighbour, board_image)];
+        if (neighbour_owner != NO_OWNER && neighbour_owner != origin.id)
+            touched[neighbour_owner] = 1;
+    }
+}
+
+// BFS over the traces from one component, flagging every component that is reached
+void flood_fill_from_component(Component origin, Bmp board_image, int *owner, uint8_t *touched)
+{
+    size_t pixel_count = (size_t) board_image.width * board_image.height;
+    uint8_t *visited = (uint8_t *) calloc(pixel_count, sizeof(uint8_t));
+    Point *queue = (Point *) malloc(sizeof(Point) * pixel_count);
+
+    if (visited == NULL || queue == NULL)
+    {
+        free(visited);
+        free(queue);
+        return;
+    }
+
+    int head = 0, tail = 0;
+    seed_queue_from_component(origin, board_image, owner, visited, queue, &tail);
+
+    while (head < tail)
+    {
+        Point current = queue[head];
+        head++;
+
+        mark_touching_components(current, origin, board_image, owner, touched);
+
+        // Search all 4 neighboring pixels
+        for (int i = 0; i < NEIGHBOUR_COUNT; i++)
+        {
+            Point neighbour = {current.row + dir_row[i], current.col + dir_col[i]};
+            if (is_open_point(neighbour, board_image, owner, visited))
+                enqueue_point(neighbour, board_image, visited, queue, &tail);
+        }
+    }
+
+    free(visited);
+    free(queue);
+}
+
+// Adds a component id to the end of a component's connection list
+void add_connection(int *connected, uint8_t *count, uint8_t component_id)
+{
+    if (*count >= MAX_COMPONENT)
+        return;
+
+    connected[*count] = component_id;
+    (*count)++;
+}
+
+// Find all the connections of one component, stored in ascending id order
+void find_connections(Component *origin, int component_count, Bmp board_image, int *owner)
+{
+    uint8_t *touched = (uint8_t *) calloc(component_count, sizeof(uint8_t));
+    if (touched == NULL)
+        return;
+
+    flood_fill_from_component(*origin, board_image, owner, touched);
+
+    for (int id = 0; id < component_count; id++)
+    {
+        if (touched[id])
+            add_connection(origin->connected, &(origin->count), id);
+    }
+    free(touched);
 }
 
 // Find all the connections between all the components
 void find_all_connections(Component_Node **component_node_head, Bmp board_image)
 {
-    Component_Node *origin_pointer = *component_node_head;
-    Component_Node *target_pointer = *component_node_head;
-    
+    int component_count = count_components(*component_node_head);
+    int *owner = create_owner_map(*component_node_head, board_image);
+    if (owner == NULL)
+        return;
+
     // For each component find all their connections
-    for (; origin_pointer != NULL; origin_pointer = origin_pointer->next)
+    for (Component_Node *origin_pointer = *component_node_head; origin_pointer != NULL; 
+        origin_pointer = origin_pointer->next)
     {
-        find_connections(origin_pointer, target_pointer, board_image);
+        find_connections(&(origin_pointer->component), component_count, board_image, owner);
     }
+    free(owner);
 }
 
 void print_component_connections(Component_Node *component_node_head)
 {
     for (; component_node_head != NULL; component_node_head = component_node_head->next)
     {
-        printf("Component %d connected to", component_node_head->component.id);
+        printf("Component %d connected to ", component_node_head->component.id);
+
+        if (component_node_head->component.count == 0)
+        {
+            printf("nothing\n");
+            continue;
+        }
         for (int j = 0; j < component_node_head->component.count; j++)
         {
-            printf(" %d", component_node_head->component.connected[j]);
+            printf("%d ", component_node_head->component.connected[j]);
         }
         printf("\n");
     }

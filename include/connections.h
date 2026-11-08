@@ -16,4 +16,6 @@
 
 void handle_c_mode(Input_request request, FILE *template_fp);
 
+int count_components(Component_Node *component_node_head);
+
 #endif

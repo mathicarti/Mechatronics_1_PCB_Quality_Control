@@ -3,6 +3,7 @@ Make sure to include check point numbers for each entry!
 
 Monday 19/10:
 Made initial commit to GitHub with all the boilerplate provided + started planning
+github repo: https://github.com/mathicarti/Mechatronics_1_PCB_Quality_Control.git
 
 Tuesday 22/10:
 Plan:
@@ -93,7 +94,7 @@ Figuring out function bugs
  Note: need to add components to the end of the linked list and not the head to agree with the criteria
  - Updated add_component_node(...); to traverse through the list first to add new components at the end.
  - Updated Component struct; it would overflow in the column and row field, changed it to uint16_t instead of a uint8_t
- Found out since all the fails in the automaticated tests would be offset by exactly 256!
+ Found out since all the fails in the automatised tests would be offset by exactly 256!
  - Made Component_Node *get_component_list(FILE *template_fp, Bmp board_image); which return a list of all the 
  components on a thresholded board. It more widely used if just the component places are needed (eg finding connections)
  - Update Component_Node struct to have an array of connections for each component (set to max of 128 components)
@@ -105,4 +106,25 @@ Working on connection mode:
  - Moved connected[] array to the component struct for less fragmentation between component_nodes and component.
  Note: BFS implementation, is a target point connected to another target point ? (these being component positions).
  If so then add the ID of connected target component to the original component. Else try another component.
+ - Reviewed my first BFS attempt for bugs (used AI assistance for the review; pasted connections.c, matching.c/h and
+ the compiler warning, and asked it to find bugs. I checked each reported bug 
+ against my code myself before changing anything).
+ - Found: visited[][] was a VLA passed as uint8_t ** (the compiler warning), queue was only height long, recursive BFS 
+ could overflow the stack, Point used uint8_t (same wrap bug as Component.column), target check compared x with y, and 
+ the white check tested a row pointer, not the pixel value.
+ - Biggest issue was the design: searching for one pixel (the target's bottom-left corner) can't work as 
+ that pixel is inside the blocked 32x32 box. Also looping over pairs only checked earlier components.
+ - Changed to one flood fill per component instead of one BFS per pair. Added create_owner_map(...) which stores the 
+ component id of every pixel covered by a box (NO_OWNER otherwise) so the BFS can treat  boxes as blocked and 
+ detect which component it touches.
+ - Rewrote connections.c: Point now uses int row/col, flat calloc'd visited array indexed row * width + col, 
+ heap queue of width * height Points and a while (head < tail) loop instead of recursion.
+ - seed_queue_from_component(...) starts the BFS from white pixels touching the outside of the origin box. 
+ mark_touching_components(...) flags any other component whose box is next to a visited pixel.
+ - Flags go in a touched[] array, then add_connection(...) is called in id order so connections are 
+ ascending with no duplicates. Fixed add_connection(...) which was incrementing count before storing (off by one).
+ - Updated print_component_connections(...) to print "nothing" when there are no connections and a  trailing space 
+ after each id to match the spec.
+
+ All tests passed :) !! Now will clean up code and arrange the files better
  
