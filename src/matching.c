@@ -29,22 +29,6 @@ void set_pixel_white(uint8_t *pixel)
     pixel[2] = 255;
 }
 
-void threshold_board_image(Bmp *board_image)
-{
-    for (int row = board_image->height - 1; row >= 0; row --)
-    {
-        for (int col = 0; col < board_image->width; col ++)
-        {
-            uint8_t *pixel = board_image->pixels[row][col];
-            // Average pixel colour and compare them to custom threshold
-            if (average_colour(pixel) > THRESHOLD)
-                set_pixel_white(pixel);
-            else
-                set_pixel_black(pixel);
-        }
-    }
-}
-
 // Returns 1 if both pixel have the same value, else 0
 int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
 {
@@ -71,6 +55,8 @@ int is_template(Template template, uint8_t ***board_pixels, int board_row, int b
 
 void find_components(Template_array template_array, Bmp board_image, Component_Node **component_node_head)
 {
+    // id used to differentiate between each components
+    uint8_t id = 0;
     // Go through all possible row where the template could fit
     for (int board_row = 0; board_row <= board_image.height - TEMPLATE_HEIGHT; board_row++)
     {
@@ -82,8 +68,9 @@ void find_components(Template_array template_array, Bmp board_image, Component_N
             {
                 if (is_template(template_array.template[i], board_image.pixels, board_row, board_col))
                 {
-                    Component new_component = {i, board_row, board_col};
+                    Component new_component = {id, i, board_row, board_col, {-1}, 0};
                     add_component_node(new_component, component_node_head);
+                    id++;
                 }
             }
         }
@@ -92,7 +79,6 @@ void find_components(Template_array template_array, Bmp board_image, Component_N
 
 void handle_l_mode(Input_request request, FILE *template_fp)
 {
-    
     // load bmp and threshold it
     Bmp board_image = read_bmp(request.board_image_filename);
     threshold_board_image(&board_image);
@@ -108,6 +94,22 @@ void handle_l_mode(Input_request request, FILE *template_fp)
     free_bmp(board_image);
     free_component_node(component_node_head);
     return;
+}
+
+void threshold_board_image(Bmp *board_image)
+{
+    for (int row = board_image->height - 1; row >= 0; row --)
+    {
+        for (int col = 0; col < board_image->width; col ++)
+        {
+            uint8_t *pixel = board_image->pixels[row][col];
+            // Average pixel colour and compare them to custom threshold
+            if (average_colour(pixel) > THRESHOLD)
+                set_pixel_white(pixel);
+            else
+                set_pixel_black(pixel);
+        }
+    }
 }
 
 // Return a list of all the components on a thresholded board

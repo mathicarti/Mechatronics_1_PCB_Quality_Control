@@ -95,4 +95,14 @@ Figuring out function bugs
  - Updated Component struct; it would overflow in the column and row field, changed it to uint16_t instead of a uint8_t
  Found out since all the fails in the automaticated tests would be offset by exactly 256!
  - Made Component_Node *get_component_list(FILE *template_fp, Bmp board_image); which return a list of all the 
- components on a thresholded board. It more widely used if jus tthe component places are needed (eg finding connections)
+ components on a thresholded board. It more widely used if just the component places are needed (eg finding connections)
+ - Update Component_Node struct to have an array of connections for each component (set to max of 128 components)
+
+Sunday 8/11:
+Working on connection mode:
+ - Updated Component struct to have an id to differentiate them. Changed find_components(...) to integrate id setting.
+ - void add_connection(int *connected, int *count, uint8_t component_id); Adds a component id to a component id.
+ - Moved connected[] array to the component struct for less fragmentation between component_nodes and component.
+ Note: BFS implementation, is a target point connected to another target point ? (these being component positions).
+ If so then add the ID of connected target component to the original component. Else try another component.
+ 

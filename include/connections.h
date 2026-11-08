@@ -13,6 +13,7 @@
 #include "matching.h"
 #include "template.h"
 
+
 void handle_c_mode(Input_request request, FILE *template_fp);
 
 #endif
