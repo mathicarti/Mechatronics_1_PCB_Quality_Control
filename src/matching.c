@@ -9,6 +9,7 @@
 #include "matching.h"
 
 // Returns 1 if both pixel have the same value, else 0
+// The board is thresholded to 0 or 255 while templates hold 0 or 1, so white needs special handling
 static int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
 {
     if ((template_pixel == 1 && board_pixel[0] == 255) || (template_pixel == board_pixel[0]))
@@ -19,6 +20,7 @@ static int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
 }
 
 // Finds if the area of interest is the same as the template, if so returns 1, else 0
+// Returns on the first mismatch, which keeps the full scan fast
 static int is_template(Template template, uint8_t ***board_pixels, int board_row, int board_col)
 {
     for (int row = 0; row < TEMPLATE_HEIGHT; row++)
@@ -32,6 +34,8 @@ static int is_template(Template template, uint8_t ***board_pixels, int board_row
     return 1;
 }
 
+// Positions are the outer loops and templates the inner one, so components are found already
+// sorted by row then column and no separate sort is needed
 static void find_components(Template_array template_array, Bmp board_image, Component_Node **component_node_head)
 {
     // id used to differentiate between each components

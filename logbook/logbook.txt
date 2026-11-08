@@ -3,7 +3,7 @@ Make sure to include check point numbers for each entry!
 
 Monday 19/10:
 Made initial commit to GitHub with all the boilerplate provided + started planning
-github repo: https://github.com/mathicarti/Mechatronics_1_PCB_Quality_Control.git
+GitHub repo for this assignment: https://github.com/mathicarti/Mechatronics_1_PCB_Quality_Control.git
 
 Tuesday 22/10:
 Plan:
@@ -127,4 +127,14 @@ Working on connection mode:
  after each id to match the spec.
 
  All tests passed :) !! Now will clean up code and arrange the files better
- 
+ Finalise the file structure to be:
+ - bitmap.c/.h same as given
+ - board.c/.h Board image preparation
+ - connection.c/.h Graph search
+ - main.c Argument parsing and error messages
+ - matching.c/.h Finding components
+ - modes.c/.h The three entry points, wiring modules together
+ - template.c/.h Reading and printing templates
+ - All these make the code more readable and versital
+
+ Finally I asked AI to help me with making comments and where to add them for the best code!

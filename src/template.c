@@ -41,6 +41,7 @@ static void arrange_template(Template template, uint8_t *template_buffer)
             for (int i = 0; i < BYTE; i++)
             {
                 // A 1 is a white pixel and 0 is a black pixel
+                // The ? : normalises the masked value to exactly 0 or 1 so pixels compare correctly
                 template[row][col_byte * BYTE + i] = (template_buffer[row * TEMPLATE_WIDTH_BYTE + col_byte] & 1 << (BYTE - 1 - i)) ? 1 : 0;
             }
         }
@@ -51,6 +52,7 @@ void get_template_at_index(Template template, int template_index, FILE *template
 {
     // 8 pixel per byte; 32 pixels per row = 4 bytes per row; 32 rows = 128 bytes
     uint8_t template_buffer[128];
+    // +1 skips the leading count byte
     fseek(template_fp, 1 + template_index * 128, SEEK_SET);
     fread(template_buffer, sizeof(uint8_t), 128, template_fp);
 
@@ -84,7 +86,7 @@ void print_template(Template template)
 {
     printf("Template data:\n");
 
-    // Traverse image from bottom to top and get bytes
+    // Row 0 is the bottom, so print from the last row down to show the template upright
     for (int row = TEMPLATE_HEIGHT - 1; row >= 0; row--)
     {
         for (int col = 0; col < TEMPLATE_WIDTH; col++)

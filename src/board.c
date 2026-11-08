@@ -4,6 +4,7 @@
 #include "types.h"
 #include "board.h"
 
+// Double so the average is exact; the threshold rule is "greater than 127"
 static double average_colour(uint8_t *pixel)
 {
     return (pixel[0] + pixel[1] + pixel[2]) / 3.0;

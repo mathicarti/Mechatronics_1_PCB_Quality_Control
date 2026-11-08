@@ -13,6 +13,7 @@ void handle_t_mode(Input_request request, FILE *template_fp)
     Template_array template_array = read_template_array(template_fp);
 
     // Check if index in range
+    // The count comes from the file, so this can't be checked in main
     if (request.index < 0 || request.index >= template_array.count)
     {
         printf("Template index out of range\n");
@@ -43,6 +44,7 @@ void handle_l_mode(Input_request request, FILE *template_fp)
     return;
 }
 
+// Mode 'c' is mode 'l' plus connections, so the component list is printed first
 void handle_c_mode(Input_request request, FILE *template_fp)
 {
     // load bmp and threshold it

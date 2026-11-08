@@ -17,6 +17,7 @@ static int pixel_index(Point point, Bmp board_image)
     return point.row * board_image.width + point.col;
 }
 
+// Cast needed as width/height are unsigned and would break the >= 0 comparison
 static int is_in_bounds(Point point, Bmp board_image)
 {
     return (point.row >= 0 && point.row < (int) board_image.height
@@ -34,6 +35,7 @@ int count_components(Component_Node *component_node_head)
 
 // Makes a flat map of the board holding the id of the component whose 32x32 box covers
 // each pixel, or NO_OWNER if no box covers it. Returns NULL if allocation fails
+// This lets the search treat boxes as walls and still know which component it touched
 static int *create_owner_map(Component_Node *component_node_head, Bmp board_image)
 {
     size_t pixel_count = (size_t) board_image.width * board_image.height;
@@ -60,6 +62,7 @@ static int *create_owner_map(Component_Node *component_node_head, Bmp board_imag
 }
 
 // Check if a point is in bounds, a white pixel, not inside a component box and unvisited
+// The bounds check must come first so the arrays are never indexed out of range
 static int is_open_point(Point point, Bmp board_image, int *owner, uint8_t *visited)
 {
     if (!is_in_bounds(point, board_image))
@@ -71,6 +74,7 @@ static int is_open_point(Point point, Bmp board_image, int *owner, uint8_t *visi
 }
 
 // Marks a point as visited and adds it to the back of the queue
+// Marking on entry (not on removal) stops a pixel being queued twice
 static void enqueue_point(Point point, Bmp board_image, uint8_t *visited, Point *queue, int *tail)
 {
     visited[pixel_index(point, board_image)] = 1;
@@ -79,6 +83,7 @@ static void enqueue_point(Point point, Bmp board_image, uint8_t *visited, Point 
 }
 
 // Starts the queue with every open pixel directly touching the outside of the component's box
+// Scanning every box pixel is simple: interior neighbours are owned, so only the outer ring passes
 static void seed_queue_from_component(Component origin, Bmp board_image, int *owner, 
     uint8_t *visited, Point *queue, int *tail)
 {
@@ -95,8 +100,8 @@ static void seed_queue_from_component(Component origin, Bmp board_image, int *ow
         }
     }
 }
-
 // Flags every other component whose box touches the given trace pixel
+// The origin is skipped so a component never lists itself
 static void mark_touching_components(Point current, Component origin, Bmp board_image, 
     int *owner, uint8_t *touched)
 {
@@ -113,6 +118,7 @@ static void mark_touching_components(Point current, Component origin, Bmp board_
 }
 
 // BFS over the traces from one component, flagging every component that is reached
+// Iterative with a heap queue because a recursive version could overflow the stack on large boards
 static void flood_fill_from_component(Component origin, Bmp board_image, int *owner, uint8_t *touched)
 {
     size_t pixel_count = (size_t) board_image.width * board_image.height;
@@ -126,6 +132,7 @@ static void flood_fill_from_component(Component origin, Bmp board_image, int *ow
         return;
     }
 
+    // head is the front of the queue and tail is the next free slot
     int head = 0, tail = 0;
     seed_queue_from_component(origin, board_image, owner, visited, queue, &tail);
 
@@ -153,6 +160,7 @@ static void flood_fill_from_component(Component origin, Bmp board_image, int *ow
 void find_all_connections(Component_Node **component_node_head, Bmp board_image)
 {
     int component_count = count_components(*component_node_head);
+    // Built once and shared, as it never changes between searches
     int *owner = create_owner_map(*component_node_head, board_image);
     if (owner == NULL)
         return;
@@ -169,6 +177,7 @@ void find_all_connections(Component_Node **component_node_head, Bmp board_image)
 // Find all the connections of one component, stored in ascending id order
 void find_connections(Component *origin, int component_count, Bmp board_image, int *owner)
 {
+    // Indexed by component id; reading it in order gives sorted, duplicate-free output
     uint8_t *touched = (uint8_t *) calloc(component_count, sizeof(uint8_t));
     if (touched == NULL)
         return;
@@ -187,6 +196,7 @@ void print_component_connections(Component_Node *component_node_head)
 {
     for (; component_node_head != NULL; component_node_head = component_node_head->next)
     {
+        // Trailing space after each id is part of the expected output format
         printf("Component %d connected to ", component_node_head->component.id);
 
         if (component_node_head->component.count == 0)

@@ -8,12 +8,13 @@ int main(int argc, char **argv)
 {
     if (argc != 4)
     {
-        printf("Invalid arguments!\n");
+        printf("Invalid arguements!\n");
         exit(1);
     }
 
     Input_request request;
     
+    // Only the arguments each mode needs are stored; argv[3] is an index or a filename depending on mode
     if (!strcmp(argv[1], "t"))
     {
         request.mode = TEMPLATE;
@@ -38,6 +39,7 @@ int main(int argc, char **argv)
 
     strcpy(request.template_filename, argv[2]);
 
+    // Binary mode so bytes are read untouched on every platform
     FILE *template_fp = fopen(request.template_filename, "rb");
     
     if (template_fp == NULL)
@@ -49,6 +51,7 @@ int main(int argc, char **argv)
     switch (request.mode)
     {
     case TEMPLATE:
+        // Negative indexes are rejected here; the upper bound needs the file's count, so the handler checks it
         if (request.index < 0)
         {
             printf("Template index out of range\n");
