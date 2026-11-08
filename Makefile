@@ -7,8 +7,8 @@ SRC_DIR = src
 OBJ_DIR = build
 INC_DIR = include
 # you may need to put your extra files here
-_DEPS = bitmap.h connections.h matching.h template.h
-_OBJS = main.o bitmap.o connections.o matching.o template.o
+_DEPS = types.h bitmap.h connection.h matching.h template.h modes.h board.h
+_OBJS = main.o bitmap.o connection.o matching.o template.o modes.o board.o
 
 DEPS = $(patsubst %,$(INC_DIR)/%,$(_DEPS))
 OBJS = $(patsubst %,$(OBJ_DIR)/%,$(_OBJS))

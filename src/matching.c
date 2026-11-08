@@ -1,36 +1,15 @@
 #include <stdio.h>
-#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <math.h>
 
-#include "bitmap.h"
-#include "connections.h"
-#include "matching.h"
+#include "types.h"
 #include "template.h"
-
-double average_colour(uint8_t *pixel)
-{
-    return (pixel[0] + pixel[1] + pixel[2]) / 3.0;
-}
-
-void set_pixel_black(uint8_t *pixel)
-{
-    pixel[0] = 0;
-    pixel[1] = 0;
-    pixel[2] = 0;
-}
-
-void set_pixel_white(uint8_t *pixel)
-{
-    pixel[0] = 255;
-    pixel[1] = 255;
-    pixel[2] = 255;
-}
+#include "connection.h"
+#include "matching.h"
 
 // Returns 1 if both pixel have the same value, else 0
-int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
+static int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
 {
     if ((template_pixel == 1 && board_pixel[0] == 255) || (template_pixel == board_pixel[0]))
     {
@@ -40,7 +19,7 @@ int pixel_is_same(uint8_t template_pixel, uint8_t *board_pixel)
 }
 
 // Finds if the area of interest is the same as the template, if so returns 1, else 0
-int is_template(Template template, uint8_t ***board_pixels, int board_row, int board_col)
+static int is_template(Template template, uint8_t ***board_pixels, int board_row, int board_col)
 {
     for (int row = 0; row < TEMPLATE_HEIGHT; row++)
     {
@@ -53,7 +32,7 @@ int is_template(Template template, uint8_t ***board_pixels, int board_row, int b
     return 1;
 }
 
-void find_components(Template_array template_array, Bmp board_image, Component_Node **component_node_head)
+static void find_components(Template_array template_array, Bmp board_image, Component_Node **component_node_head)
 {
     // id used to differentiate between each components
     uint8_t id = 0;
@@ -77,41 +56,6 @@ void find_components(Template_array template_array, Bmp board_image, Component_N
     }
 }
 
-void handle_l_mode(Input_request request, FILE *template_fp)
-{
-    // load bmp and threshold it
-    Bmp board_image = read_bmp(request.board_image_filename);
-    threshold_board_image(&board_image);
-    
-    // Search through board for any matching templates and add it to list
-    // Get the list of components and positions on the board
-    Component_Node *component_node_head = get_component_list(template_fp, board_image);
-
-    // print component type and positions
-    print_components(component_node_head);
-
-    // free variables
-    free_bmp(board_image);
-    free_component_node(component_node_head);
-    return;
-}
-
-void threshold_board_image(Bmp *board_image)
-{
-    for (int row = board_image->height - 1; row >= 0; row --)
-    {
-        for (int col = 0; col < board_image->width; col ++)
-        {
-            uint8_t *pixel = board_image->pixels[row][col];
-            // Average pixel colour and compare them to custom threshold
-            if (average_colour(pixel) > THRESHOLD)
-                set_pixel_white(pixel);
-            else
-                set_pixel_black(pixel);
-        }
-    }
-}
-
 // Return a list of all the components on a thresholded board
 Component_Node *get_component_list(FILE *template_fp, Bmp board_image)
 {
@@ -125,14 +69,6 @@ Component_Node *get_component_list(FILE *template_fp, Bmp board_image)
     
     free_template_array(&template_array);
     return component_node_head;
-}
-
-void print_components(Component_Node *component_node_head)
-{
-    printf("Found %i components:\n", count_components(component_node_head));
-    for (; component_node_head != NULL; component_node_head = component_node_head->next)
-        printf("type: %d, row: %d, column: %d\n", component_node_head->component.type, 
-            component_node_head->component.row, component_node_head->component.column);
 }
 
 // Adds a Component to the end of a linked list
@@ -164,4 +100,12 @@ void free_component_node(Component_Node *component_node_head)
         component_node_head = component_node_head->next;
         free(temp);
     }
+}
+
+void print_components(Component_Node *component_node_head)
+{
+    printf("Found %i components:\n", count_components(component_node_head));
+    for (; component_node_head != NULL; component_node_head = component_node_head->next)
+        printf("type: %d, row: %d, column: %d\n", component_node_head->component.type, 
+            component_node_head->component.row, component_node_head->component.column);
 }

@@ -1,36 +1,19 @@
 #include <stdio.h>
-#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <math.h>
 
+#include "types.h"
 #include "bitmap.h"
-#include "connections.h"
-#include "matching.h"
-#include "template.h"
-
-#define NO_OWNER -1
-#define NEIGHBOUR_COUNT 4
-
-typedef struct
-{
-    int row;
-    int col;
-} Point;
-
-// Directions for moving Down, Up, Left, Right (row 0 is the bottom of the image)
-const int dir_row[NEIGHBOUR_COUNT] = {-1, 1, 0, 0};
-const int dir_col[NEIGHBOUR_COUNT] = {0, 0, -1, 1};
+#include "connection.h"
 
 // Converts a point to its index in the flat visited/owner arrays
-int pixel_index(Point point, Bmp board_image)
+static int pixel_index(Point point, Bmp board_image)
 {
     return point.row * board_image.width + point.col;
 }
 
-int is_in_bounds(Point point, Bmp board_image)
+static int is_in_bounds(Point point, Bmp board_image)
 {
     return (point.row >= 0 && point.row < (int) board_image.height
         && point.col >= 0 && point.col < (int) board_image.width);
@@ -47,7 +30,7 @@ int count_components(Component_Node *component_node_head)
 
 // Makes a flat map of the board holding the id of the component whose 32x32 box covers
 // each pixel, or NO_OWNER if no box covers it. Returns NULL if allocation fails
-int *create_owner_map(Component_Node *component_node_head, Bmp board_image)
+static int *create_owner_map(Component_Node *component_node_head, Bmp board_image)
 {
     size_t pixel_count = (size_t) board_image.width * board_image.height;
     int *owner = (int *) malloc(sizeof(int) * pixel_count);
@@ -73,7 +56,7 @@ int *create_owner_map(Component_Node *component_node_head, Bmp board_image)
 }
 
 // Check if a point is in bounds, a white pixel, not inside a component box and unvisited
-int is_open_point(Point point, Bmp board_image, int *owner, uint8_t *visited)
+static int is_open_point(Point point, Bmp board_image, int *owner, uint8_t *visited)
 {
     if (!is_in_bounds(point, board_image))
         return 0;
@@ -84,7 +67,7 @@ int is_open_point(Point point, Bmp board_image, int *owner, uint8_t *visited)
 }
 
 // Marks a point as visited and adds it to the back of the queue
-void enqueue_point(Point point, Bmp board_image, uint8_t *visited, Point *queue, int *tail)
+static void enqueue_point(Point point, Bmp board_image, uint8_t *visited, Point *queue, int *tail)
 {
     visited[pixel_index(point, board_image)] = 1;
     queue[*tail] = point;
@@ -92,7 +75,7 @@ void enqueue_point(Point point, Bmp board_image, uint8_t *visited, Point *queue,
 }
 
 // Starts the queue with every open pixel directly touching the outside of the component's box
-void seed_queue_from_component(Component origin, Bmp board_image, int *owner, 
+static void seed_queue_from_component(Component origin, Bmp board_image, int *owner, 
     uint8_t *visited, Point *queue, int *tail)
 {
     for (int row = 0; row < TEMPLATE_HEIGHT; row++)
@@ -110,7 +93,7 @@ void seed_queue_from_component(Component origin, Bmp board_image, int *owner,
 }
 
 // Flags every other component whose box touches the given trace pixel
-void mark_touching_components(Point current, Component origin, Bmp board_image, 
+static void mark_touching_components(Point current, Component origin, Bmp board_image, 
     int *owner, uint8_t *touched)
 {
     for (int i = 0; i < NEIGHBOUR_COUNT; i++)
@@ -126,7 +109,7 @@ void mark_touching_components(Point current, Component origin, Bmp board_image,
 }
 
 // BFS over the traces from one component, flagging every component that is reached
-void flood_fill_from_component(Component origin, Bmp board_image, int *owner, uint8_t *touched)
+static void flood_fill_from_component(Component origin, Bmp board_image, int *owner, uint8_t *touched)
 {
     size_t pixel_count = (size_t) board_image.width * board_image.height;
     uint8_t *visited = (uint8_t *) calloc(pixel_count, sizeof(uint8_t));
@@ -162,14 +145,21 @@ void flood_fill_from_component(Component origin, Bmp board_image, int *owner, ui
     free(queue);
 }
 
-// Adds a component id to the end of a component's connection list
-void add_connection(int *connected, uint8_t *count, uint8_t component_id)
+// Find all the connections between all the components
+void find_all_connections(Component_Node **component_node_head, Bmp board_image)
 {
-    if (*count >= MAX_COMPONENT)
+    int component_count = count_components(*component_node_head);
+    int *owner = create_owner_map(*component_node_head, board_image);
+    if (owner == NULL)
         return;
 
-    connected[*count] = component_id;
-    (*count)++;
+    // For each component find all their connections
+    for (Component_Node *origin_pointer = *component_node_head; origin_pointer != NULL; 
+        origin_pointer = origin_pointer->next)
+    {
+        find_connections(&(origin_pointer->component), component_count, board_image, owner);
+    }
+    free(owner);
 }
 
 // Find all the connections of one component, stored in ascending id order
@@ -187,23 +177,6 @@ void find_connections(Component *origin, int component_count, Bmp board_image, i
             add_connection(origin->connected, &(origin->count), id);
     }
     free(touched);
-}
-
-// Find all the connections between all the components
-void find_all_connections(Component_Node **component_node_head, Bmp board_image)
-{
-    int component_count = count_components(*component_node_head);
-    int *owner = create_owner_map(*component_node_head, board_image);
-    if (owner == NULL)
-        return;
-
-    // For each component find all their connections
-    for (Component_Node *origin_pointer = *component_node_head; origin_pointer != NULL; 
-        origin_pointer = origin_pointer->next)
-    {
-        find_connections(&(origin_pointer->component), component_count, board_image, owner);
-    }
-    free(owner);
 }
 
 void print_component_connections(Component_Node *component_node_head)
@@ -225,24 +198,12 @@ void print_component_connections(Component_Node *component_node_head)
     }
 }
 
-void handle_c_mode(Input_request request, FILE *template_fp)
+// Adds a component id to the end of a component's connection list
+void add_connection(int *connected, uint8_t *count, uint8_t component_id)
 {
-    // load bmp and threshold it
-    Bmp board_image = read_bmp(request.board_image_filename);
-    threshold_board_image(&board_image);
-    
-    // Get the list of components and positions on the board
-    Component_Node *component_node_head = get_component_list(template_fp, board_image);
+    if (*count >= MAX_COMPONENT)
+        return;
 
-    // print component type and positions
-    print_components(component_node_head);
-
-    find_all_connections(&component_node_head, board_image);
-    
-    print_component_connections(component_node_head);
-    
-    // free variables
-    free_bmp(board_image);
-    free_component_node(component_node_head);
-    return;
+    connected[*count] = component_id;
+    (*count)++;
 }

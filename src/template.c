@@ -1,32 +1,9 @@
 #include <stdio.h>
-#include <assert.h>
-#include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <math.h>
 
-#include "bitmap.h"
-#include "connections.h"
-#include "matching.h"
+#include "types.h"
 #include "template.h"
-
-void handle_t_mode(Input_request request, FILE *template_fp)
-{
-    // Load the binary file as a bmp style template array
-    Template_array template_array = read_template_array(template_fp);
-
-    // Check if index in range
-    if (request.index < 0 || request.index >= template_array.count)
-    {
-        printf("Template index out of range\n");
-        return;
-    }
-    // Print template at index
-    print_template(template_array.template[request.index]);
-
-    free_template_array(&template_array);
-}
 
 // Transforms a binary template to a bmp arranged template array
 Template_array read_template_array(FILE *template_fp)
@@ -51,18 +28,9 @@ Template_array read_template_array(FILE *template_fp)
     return template_array;
 }
 
-void get_template_at_index(Template template, int template_index, FILE *template_fp)
-{
-    // 8 pixel per byte; 32 pixels per row = 4 bytes per row; 32 rows = 128 bytes
-    uint8_t template_buffer[128];
-    fseek(template_fp, 1 + template_index * 128, SEEK_SET);
-    fread(template_buffer, sizeof(uint8_t), 128, template_fp);
-
-    arrange_template(template, template_buffer);
-}
 
 // Arranges a binary template to a bmp style template
-void arrange_template(Template template, uint8_t *template_buffer)
+static void arrange_template(Template template, uint8_t *template_buffer)
 {
     for (int row = TEMPLATE_HEIGHT - 1; row >= 0; row--)
     {
@@ -79,6 +47,16 @@ void arrange_template(Template template, uint8_t *template_buffer)
     }
 }
 
+void get_template_at_index(Template template, int template_index, FILE *template_fp)
+{
+    // 8 pixel per byte; 32 pixels per row = 4 bytes per row; 32 rows = 128 bytes
+    uint8_t template_buffer[128];
+    fseek(template_fp, 1 + template_index * 128, SEEK_SET);
+    fread(template_buffer, sizeof(uint8_t), 128, template_fp);
+
+    arrange_template(template, template_buffer);
+}
+
 // Frees a template array
 void free_template_array(Template_array *template_array)
 {
@@ -91,6 +69,15 @@ void free_template_array(Template_array *template_array)
         free(template_array->template[i]);
     }
     free(template_array->template);
+}
+
+static void print_pixel(uint8_t pixel)
+{
+    // Pixel either 1 for white or 0 for black
+    if (pixel)
+        printf("1");
+    else
+        printf(" ");
 }
 
 void print_template(Template template)
@@ -106,13 +93,4 @@ void print_template(Template template)
         }
         printf("\n");
     }
-}
-
-void print_pixel(uint8_t pixel)
-{
-    // Pixel either 1 for white or 0 for black
-    if (pixel)
-        printf("1");
-    else
-        printf(" ");
 }
